@@ -27,6 +27,8 @@ jsonselect [option] [path]
         json file
   -o string
         output file 
+  -p bool
+        pretty print
 * path:
     path of json you want to select.
     please read more in the gjson repository 
@@ -40,3 +42,5 @@ Here are some examples:
 `cat user.json | jsonselect data.user_id`
 
 `jsonselect -f user.json -o user.out data.user_id`
+
+`jsonselect -f user.json -o user.out -p=true data.user_id`
