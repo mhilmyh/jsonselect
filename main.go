@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/tidwall/gjson"
 )
 
@@ -20,15 +22,12 @@ func init() {
 func main() {
 	flag.Parse()
 
-	// selected path must defined
 	if len(os.Args) < 2 {
 		log.Fatal("path must be defined")
 	}
 
 	var jsonStr string
 	var err error
-	var result interface{}
-
 	if *jsonFile != "" {
 		jsonStr, err = openJsonFile(*jsonFile)
 		if err != nil {
@@ -38,17 +37,20 @@ func main() {
 		jsonStr = readFromStandardInput()
 	}
 
+	var result gjson.Result
 	result = selectJson(jsonStr, os.Args[1])
-	fmt.Println(result)
 
-	// send to output file if flag 'o' is provided
+	var outputByte []byte
+	outputByte, err = json.Marshal(result.Value())
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	if *outputFile != "" {
 
 	}
 
-
-	// send to standard output
-
+	fmt.Println(string(outputByte))
 	os.Exit(0)
 }
 
@@ -60,12 +62,19 @@ func openJsonFile(filename string) (string, error) {
 	return string(file), nil
 }
 
-func selectJson(content, path string) interface{} {
+func selectJson(content, path string) gjson.Result {
 	return gjson.Get(content, path)
 }
 
 func readFromStandardInput() string {
+	var str string
 	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	return scanner.Text()
+	for scanner.Scan() {
+		txt := scanner.Text()
+		if txt == "" {
+			break
+		}
+		str += txt
+	}
+	return str
 }
