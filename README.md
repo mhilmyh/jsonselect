@@ -15,7 +15,7 @@ go build
 mv ./jsonselect /usr/local/jsonselect
 
 # or you can register it to your PATH variable
-# every os / shell has their way, figure it your self :)
+# every os / shell has their way, figure it out your self :)
 ```
 4. Use the binary
 
