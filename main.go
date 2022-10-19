@@ -40,8 +40,8 @@ func main() {
 		jsonStr = readFromStandardInput()
 	}
 
-	var result *gjson.Result
-	result = selectJson(jsonStr, flag.Arg(0))
+	var result []gjson.Result
+	result = selectJson(jsonStr, flag.Args())
 	var outputByte []byte
 	outputByte, err = marshalSelectedJson(result, *prettyPrint)
 	if err != nil {
@@ -68,9 +68,15 @@ func openJsonFile(filename string) (string, error) {
 	return string(file), nil
 }
 
-func selectJson(content, path string) *gjson.Result {
-	res := gjson.Get(content, path)
-	return &res
+func selectJson(content string, path []string) (res []gjson.Result) {
+	if len(path) == 1 {
+		value := gjson.Get(content, path[0])
+		res = []gjson.Result{value}
+	} else {
+		value := gjson.GetMany(content, path...)
+		res = value
+	}
+	return res
 }
 
 func readFromStandardInput() string {
@@ -103,9 +109,28 @@ func writeOuputToFile(path string, out []byte) (err error) {
 	return nil
 }
 
-func marshalSelectedJson(res *gjson.Result, pretty bool) (out []byte, err error) {
-	if pretty {
-		return json.MarshalIndent(res.Value(), "", "\t")
+func marshalSelectedJson(res []gjson.Result, pretty bool) (out []byte, err error) {
+	for i, r := range res {
+		var v []byte
+		if pretty {
+			v, err = json.MarshalIndent(r.Value(), "", "\t")
+			if err != nil {
+				return
+			}
+			out = append(out, v...)
+			if i < len(res) - 1 {
+				out = append(out, []byte("\n")...)
+			}
+			continue
+		}
+		v, err = json.Marshal(r.Value())
+		if err != nil {
+			return
+		}
+		out = append(out, v...)
+		if i < len(res) - 1 {
+			out = append(out, []byte(",")...)
+		}
 	}
-	return json.Marshal(res.Value())
+	return
 }
